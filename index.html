@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OrderFlow | Cancellation Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #00b9b4;
+            --primary-light: rgba(0, 185, 180, 0.1);
+            --primary-dark: #009690;
+            --secondary-color: #ffd001;
+            --secondary-light: rgba(255, 208, 1, 0.1);
+            --secondary-dark: #e6bb00;
+            --sidebar-width: 280px;
+            --top-nav-height: 70px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        .sidebar {
+            background-color: white;
+            height: 100vh;
+            width: var(--sidebar-width);
+            position: fixed;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.03);
+            padding: 1.5rem 1rem;
+        }
+
+        .sidebar-header {
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            margin-bottom: 1.5rem;
+        }
+
+        .logo-wrapper {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .logo-icon {
+            font-size: 1.75rem;
+            color: var(--primary-color);
+            margin-right: 0.75rem;
+        }
+
+        .sidebar-menu .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            color: #6c757d;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-menu .nav-link:hover, .sidebar-menu .nav-link.active {
+            color: var(--primary-color);
+            background-color: var(--primary-light);
+        }
+
+        .sidebar-menu .nav-link i {
+            font-size: 1.1rem;
+            width: 24px;
+            text-align: center;
+            margin-right: 0.75rem;
+        }
+
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 1.5rem;
+        }
+
+        .top-navbar {
+            height: var(--top-nav-height);
+            background-color: white;
+            box-shadow: 0 0.125rem 0.625rem rgba(0, 0, 0, 0.05);
+            padding: 0 1.5rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .card {
+            border: none;
+            border-radius: 0.5rem;
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.05);
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 1.25rem 1.5rem;
+        }
+
+        .summary-card {
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .summary-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .bg-primary-light {
+            background-color: var(--primary-light);
+        }
+
+        .bg-warning-light {
+            background-color: var(--secondary-light);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+
+        .btn-warning {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            color: #212529;
+        }
+
+        .btn-warning:hover {
+            background-color: var(--secondary-dark);
+            border-color: var(--secondary-dark);
+        }
+
+        .badge.bg-primary {
+            background-color: var(--primary-color) !important;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(0, 185, 180, 0.25);
+        }
+
+        .table th {
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            color: #6c757d;
+            border-top: none;
+        }
+
+        .alert-info {
+            background-color: var(--primary-light);
+            border-color: rgba(0, 185, 180, 0.2);
+            color: var(--primary-dark);
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                position: fixed;
+                left: -100%;
+                z-index: 1001;
+            }
+            
+            .sidebar.show {
+                left: 0;
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo-wrapper">
+                <i class="fas fa-exchange-alt logo-icon"></i>
+                <span class="logo-text fw-bold">OrderFlow</span>
+            </div>
+            <div class="sidebar-subtitle text-muted small">Cancellation Management</div>
+        </div>
+        
+        <div class="sidebar-menu">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#dashboard" data-bs-toggle="tab">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#add-cancellation" data-bs-toggle="tab">
+                        <i class="fas fa-plus-circle"></i>
+                        <span>Add Cancellation</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#cancelled-orders" data-bs-toggle="tab">
+                        <i class="fas fa-list-ol"></i>
+                        <span>Cancelled Orders</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#reports" data-bs-toggle="tab">
+                        <i class="fas fa-chart-pie"></i>
+                        <span>Reports</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Navigation Bar -->
+        <nav class="navbar top-navbar mb-3">
+            <div class="container-fluid">
+                <button class="btn sidebar-toggle d-lg-none">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="navbar-title ms-3">
+                    <h4 class="mb-0">Dashboard Overview</h4>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Tab Content -->
+        <div class="tab-content">
+            <!-- Dashboard Tab -->
+            <div class="tab-pane fade show active" id="dashboard">
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card summary-card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="card-subtitle text-muted">Total Cancellations</h6>
+                                        <h2 class="card-title mt-2" id="total-cancellations">0</h2>
+                                    </div>
+                                    <div class="summary-icon bg-primary-light">
+                                        <i class="fas fa-ban text-primary"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="card summary-card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="card-subtitle text-muted">Cancellation Rate</h6>
+                                        <h2 class="card-title mt-2" id="cancellation-rate">0%</h2>
+                                    </div>
+                                    <div class="summary-icon bg-warning-light">
+                                        <i class="fas fa-percent text-warning"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="card summary-card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="card-subtitle text-muted">Top Admin</h6>
+                                        <h2 class="card-title mt-2" id="top-admin">-</h2>
+                                    </div>
+                                    <div class="summary-icon bg-primary-light">
+                                        <i class="fas fa-user-tie text-primary"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="card summary-card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="card-subtitle text-muted">Top Market</h6>
+                                        <h2 class="card-title mt-2" id="top-market">-</h2>
+                                    </div>
+                                    <div class="summary-icon bg-primary-light">
+                                        <i class="fas fa-store text-primary"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Recent Cancellations</h5>
+                                <a href="#cancelled-orders" class="btn btn-sm btn-outline-primary" data-bs-toggle="tab">View All</a>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Order ID</th>
+                                                <th>Admin</th>
+                                                <th>Market</th>
+                                                <th>Date</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="recent-cancellations">
+                                            <!-- Filled by JavaScript -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Admin Performance</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Admin</th>
+                                                <th>Cancellations</th>
+                                                <th>Rate</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="admin-performance-table">
+                                            <!-- Filled by JavaScript -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Add Cancellation Tab -->
+            <div class="tab-pane fade" id="add-cancellation">
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Add New Cancellation</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="cancellation-form">
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="order-id" class="form-label">Order ID</label>
+                                            <input type="text" class="form-control" id="order-id" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="cancellation-date" class="form-label">Cancellation Date</label>
+                                            <input type="datetime-local" class="form-control" id="cancellation-date" required>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="admin-name" class="form-label">Admin Name</label>
+                                            <select class="form-select" id="admin-name" required>
+                                                <option value="" selected disabled>Select Admin</option>
+                                                <option value="Hamo">Hamo</option>
+                                                <option value="Mhamad Q">Mhamad Q</option>
+                                                <option value="Chro">Chro</option>
+                                                <option value="Mhamad W">Mhamad W</option>
+                                                <option value="Mhamad D">Mhamad D</option>
+                                                <option value="Mamand">Mamand</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="market" class="form-label">Market</label>
+                                            <select class="form-select" id="market" required>
+                                                <option value="" selected disabled>Select Market</option>
+                                                <option value="Koya">Koya</option>
+                                                <option value="100m">100m</option>
+                                                <option value="Kirkuk">Kirkuk</option>
+                                                <option value="Cihan City">Cihan City</option>
+                                                <option value="Erest">Erest</option>
+                                                <option value="LifeTower">LifeTower</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="reason" class="form-label">Cancellation Reason</label>
+                                        <select class="form-select" id="reason" required>
+                                            <option value="" selected disabled>Select Reason</option>
+                                            <option value="Customer Request">Customer Request</option>
+                                            <option value="Out of Stock">Out of Stock</option>
+                                            <option value="Delivery Delay">Delivery Delay</option>
+                                            <option value="Price Dispute">Price Dispute</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="mb-3" id="other-reason-container" style="display: none;">
+                                        <label for="other-reason" class="form-label">Specify Reason</label>
+                                        <input type="text" class="form-control" id="other-reason">
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="notes" class="form-label">Notes</label>
+                                        <textarea class="form-control" id="notes" rows="3"></textarea>
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-end">
+                                        <button type="button" class="btn btn-light me-2" onclick="resetForm()">Cancel</button>
+                                        <button type="submit" class="btn btn-primary">Save Cancellation</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Cancelled Orders Tab -->
+            <div class="tab-pane fade" id="cancelled-orders">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Cancelled Orders</h5>
+                        <div>
+                            <button class="btn btn-sm btn-outline-secondary me-2" onclick="exportData('csv')">
+                                <i class="fas fa-download me-1"></i> CSV
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary" onclick="showAddCancellation()">
+                                <i class="fas fa-plus me-1"></i> Add New
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="cancelled-orders-table">
+                                <thead>
+                                    <tr>
+                                        <th>Order ID</th>
+                                        <th>Date</th>
+                                        <th>Admin</th>
+                                        <th>Market</th>
+                                        <th>Reason</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Filled by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Reports Tab -->
+            <div class="tab-pane fade" id="reports">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Generate Report</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="report-form">
+                                    <div class="mb-3">
+                                        <label class="form-label">Report Type</label>
+                                        <select class="form-select" id="report-type" required>
+                                            <option value="" selected disabled>Select Report Type</option>
+                                            <option value="daily">Daily Cancellation Report</option>
+                                            <option value="weekly">Weekly Summary</option>
+                                            <option value="monthly">Monthly Analysis</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Date Range</label>
+                                        <div class="row g-2">
+                                            <div class="col-md-6">
+                                                <input type="date" class="form-control" id="start-date" required>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <input type="date" class="form-control" id="end-date" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-end">
+                                        <button type="button" class="btn btn-light me-2" onclick="resetReportForm()">Cancel</button>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-download me-2"></i> Generate
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Cancellation Rate Calculator</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="total-orders-form">
+                                    <div class="mb-3">
+                                        <label for="total-orders" class="form-label">Total Orders Delivered</label>
+                                        <input type="number" class="form-control" id="total-orders" placeholder="Enter total orders delivered today" required>
+                                    </div>
+                                    
+                                    <div class="alert alert-info">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            <div>
+                                                <strong>Cancellation Rate:</strong>
+                                                <span id="calculated-rate">0%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-end">
+                                        <button type="submit" class="btn btn-primary">Calculate Rate</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Cancellation Modal -->
+    <div class="modal fade" id="viewCancellationModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Cancellation Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label small text-muted">Order ID</label>
+                                <p id="modal-order-id">-</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label small text-muted">Cancellation Date</label>
+                                <p id="modal-cancellation-date">-</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label small text-muted">Admin Name</label>
+                                <p id="modal-admin-name">-</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label small text-muted">Market</label>
+                                <p id="modal-market">-</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label class="form-label small text-muted">Cancellation Reason</label>
+                                <p id="modal-reason">-</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label class="form-label small text-muted">Notes</label>
+                                <p id="modal-notes" class="text-muted">No notes provided</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-danger" id="delete-btn">
+                        <i class="fas fa-trash me-1"></i> Delete Record
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+
+    <script>
+        // Initialize the application when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            initApp();
+        });
+
+        function initApp() {
+            // Set current date in cancellation form
+            const now = new Date();
+            const timezoneOffset = now.getTimezoneOffset() * 60000;
+            const localISOTime = (new Date(now - timezoneOffset)).toISOString().slice(0, 16);
+            document.getElementById('cancellation-date').value = localISOTime;
+            
+            // Set default dates in report form
+            document.getElementById('start-date').valueAsDate = new Date();
+            document.getElementById('end-date').valueAsDate = new Date();
+            
+            // Add event listeners
+            document.getElementById('reason').addEventListener('change', function() {
+                const otherReasonContainer = document.getElementById('other-reason-container');
+                otherReasonContainer.style.display = this.value === 'Other' ? 'block' : 'none';
+            });
+            
+            // Form submission
+            document.getElementById('cancellation-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                addCancellation();
+            });
+            
+            // Total orders form submission
+            document.getElementById('total-orders-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                calculateCancellationRate();
+            });
+            
+            // Report form submission
+            document.getElementById('report-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                generateReport();
+            });
+            
+            // Sidebar toggle for mobile
+            document.querySelector('.sidebar-toggle').addEventListener('click', function() {
+                document.querySelector('.sidebar').classList.toggle('show');
+            });
+            
+            // Load data from local storage
+            loadFromLocalStorage();
+        }
+
+        // Add new cancellation
+        function addCancellation() {
+            const orderId = document.getElementById('order-id').value;
+            const cancellationDate = document.getElementById('cancellation-date').value;
+            const adminName = document.getElementById('admin-name').value;
+            const market = document.getElementById('market').value;
+            const reason = document.getElementById('reason').value;
+            const otherReason = document.getElementById('other-reason').value;
+            const notes = document.getElementById('notes').value;
+            
+            if (!orderId || !cancellationDate || !adminName || !market || !reason) {
+                alert('Please fill all required fields');
+                return;
+            }
+            
+            // Format the date for display
+            const formattedDate = formatDateTime(cancellationDate);
+            
+            // Use "Other" reason if specified
+            const displayReason = reason === 'Other' ? otherReason : reason;
+            
+            // Create new cancellation object
+            const newCancellation = {
+                id: orderId,
+                date: formattedDate,
+                admin: adminName,
+                market: market,
+                reason: displayReason,
+                notes: notes,
+                timestamp: new Date().getTime()
+            };
+            
+            // Save to local storage
+            saveCancellation(newCancellation);
+            
+            // Add to cancelled orders table
+            addToCancelledOrdersTable(newCancellation);
+            
+            // Add to recent cancellations if there's space
+            addToRecentCancellations(newCancellation);
+            
+            // Update dashboard stats
+            updateDashboard();
+            
+            // Reset form
+            resetForm();
+            
+            // Show success message
+            alert(`Cancellation for order ${orderId} has been recorded successfully.`);
+        }
+
+        // Format date time for display
+        function formatDateTime(dateTimeString) {
+            const date = new Date(dateTimeString);
+            return date.toLocaleString('en-US', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+        }
+
+        // Save cancellation to local storage
+        function saveCancellation(cancellation) {
+            let cancellations = JSON.parse(localStorage.getItem('cancellations')) || [];
+            cancellations.unshift(cancellation); // Add to beginning of array
+            localStorage.setItem('cancellations', JSON.stringify(cancellations));
+        }
+
+        // Load from local storage
+        function loadFromLocalStorage() {
+            const cancellations = JSON.parse(localStorage.getItem('cancellations')) || [];
+            
+            if (cancellations.length > 0) {
+                // Populate cancelled orders table
+                const cancelledOrdersTable = document.getElementById('cancelled-orders-table').getElementsByTagName('tbody')[0];
+                cancelledOrdersTable.innerHTML = '';
+                
+                cancellations.forEach(cancellation => {
+                    const row = cancelledOrdersTable.insertRow();
+                    row.innerHTML = `
+                        <td>${cancellation.id}</td>
+                        <td>${cancellation.date}</td>
+                        <td>${cancellation.admin}</td>
+                        <td>${cancellation.market}</td>
+                        <td><span class="badge bg-primary-light text-primary">${cancellation.reason}</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary view-btn" data-id="${cancellation.id}" data-timestamp="${cancellation.timestamp}">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger ms-1 delete-btn" data-id="${cancellation.id}" data-timestamp="${cancellation.timestamp}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                });
+                
+                // Set up event listeners for view and delete buttons
+                document.querySelectorAll('.view-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        viewCancellation(this.getAttribute('data-id'), this.getAttribute('data-timestamp'));
+                    });
+                });
+                
+                document.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        deleteCancellation(this.getAttribute('data-id'), this.getAttribute('data-timestamp'));
+                    });
+                });
+                
+                // Populate recent cancellations (last 5)
+                const recentCancellations = document.getElementById('recent-cancellations');
+                recentCancellations.innerHTML = '';
+                
+                cancellations.slice(0, 5).forEach(cancellation => {
+                    const row = recentCancellations.insertRow();
+                    row.innerHTML = `
+                        <td>${cancellation.id}</td>
+                        <td>${cancellation.admin}</td>
+                        <td>${cancellation.market}</td>
+                        <td>${cancellation.date}</td>
+                    `;
+                });
+                
+                // Populate admin performance table
+                updateAdminPerformanceTable(cancellations);
+            }
+            
+            // Update dashboard stats
+            updateDashboard();
+        }
+
+        // Add to cancelled orders table
+        function addToCancelledOrdersTable(cancellation) {
+            const cancelledOrdersTable = document.getElementById('cancelled-orders-table').getElementsByTagName('tbody')[0];
+            const row = cancelledOrdersTable.insertRow(0); // Add at the top
+            
+            row.innerHTML = `
+                <td>${cancellation.id}</td>
+                <td>${cancellation.date}</td>
+                <td>${cancellation.admin}</td>
+                <td>${cancellation.market}</td>
+                <td><span class="badge bg-primary-light text-primary">${cancellation.reason}</span></td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary view-btn" data-id="${cancellation.id}" data-timestamp="${cancellation.timestamp}">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger ms-1 delete-btn" data-id="${cancellation.id}" data-timestamp="${cancellation.timestamp}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            
+            // Add event listeners to new buttons
+            row.querySelector('.view-btn').addEventListener('click', function() {
+                viewCancellation(this.getAttribute('data-id'), this.getAttribute('data-timestamp'));
+            });
+            
+            row.querySelector('.delete-btn').addEventListener('click', function() {
+                deleteCancellation(this.getAttribute('data-id'), this.getAttribute('data-timestamp'));
+            });
+        }
+
+        // Add to recent cancellations
+        function addToRecentCancellations(cancellation) {
+            const recentCancellations = document.getElementById('recent-cancellations');
+            const rows = recentCancellations.getElementsByTagName('tr');
+            
+            // If we have less than 5, add new row at top
+            if (rows.length < 5) {
+                const row = recentCancellations.insertRow(0);
+                row.innerHTML = `
+                    <td>${cancellation.id}</td>
+                    <td>${cancellation.admin}</td>
+                    <td>${cancellation.market}</td>
+                    <td>${cancellation.date}</td>
+                `;
+            } else {
+                // Remove last row and add new one at top
+                recentCancellations.deleteRow(rows.length - 1);
+                const row = recentCancellations.insertRow(0);
+                row.innerHTML = `
+                    <td>${cancellation.id}</td>
+                    <td>${cancellation.admin}</td>
+                    <td>${cancellation.market}</td>
+                    <td>${cancellation.date}</td>
+                `;
+            }
+        }
+
+        // Update admin performance table
+        function updateAdminPerformanceTable(cancellations) {
+            const adminPerformanceTable = document.getElementById('admin-performance-table');
+            adminPerformanceTable.innerHTML = '';
+            
+            if (cancellations.length === 0) return;
+            
+            // Calculate admin stats
+            const adminStats = {};
+            cancellations.forEach(c => {
+                adminStats[c.admin] = (adminStats[c.admin] || 0) + 1;
+            });
+            
+            // Convert to array and sort by count descending
+            const sortedAdmins = Object.entries(adminStats)
+                .map(([admin, count]) => ({ admin, count }))
+                .sort((a, b) => b.count - a.count);
+            
+            // Add to table
+            sortedAdmins.forEach(stat => {
+                const row = adminPerformanceTable.insertRow();
+                const rate = (stat.count / cancellations.length * 100).toFixed(1);
+                row.innerHTML = `
+                    <td>${stat.admin}</td>
+                    <td>${stat.count}</td>
+                    <td>${rate}%</td>
+                `;
+            });
+        }
+
+        // Update dashboard stats
+        function updateDashboard() {
+            const cancellations = JSON.parse(localStorage.getItem('cancellations')) || [];
+            
+            // Update total cancellations
+            document.getElementById('total-cancellations').textContent = cancellations.length;
+            
+            // Calculate cancellation rate (demo - in real app you'd have total orders)
+            const rate = cancellations.length > 0 ? (cancellations.length / 100 * 2.5).toFixed(1) : 0;
+            document.getElementById('cancellation-rate').textContent = `${rate}%`;
+            
+            // Find top admin
+            if (cancellations.length > 0) {
+                const adminCounts = {};
+                cancellations.forEach(c => {
+                    adminCounts[c.admin] = (adminCounts[c.admin] || 0) + 1;
+                });
+                
+                const topAdmin = Object.keys(adminCounts).reduce((a, b) => adminCounts[a] > adminCounts[b] ? a : b);
+                document.getElementById('top-admin').textContent = topAdmin;
+                
+                // Find top market
+                const marketCounts = {};
+                cancellations.forEach(c => {
+                    marketCounts[c.market] = (marketCounts[c.market] || 0) + 1;
+                });
+                
+                const topMarket = Object.keys(marketCounts).reduce((a, b) => marketCounts[a] > marketCounts[b] ? a : b);
+                document.getElementById('top-market').textContent = topMarket;
+            }
+        }
+
+        // View cancellation details
+        function viewCancellation(orderId, timestamp) {
+            const cancellations = JSON.parse(localStorage.getItem('cancellations')) || [];
+            const cancellation = cancellations.find(c => c.id === orderId && c.timestamp == timestamp);
+            
+            if (!cancellation) {
+                alert('Cancellation record not found');
+                return;
+            }
+            
+            // Populate modal with data
+            document.getElementById('modal-order-id').textContent = cancellation.id;
+            document.getElementById('modal-cancellation-date').textContent = cancellation.date;
+            document.getElementById('modal-admin-name').textContent = cancellation.admin;
+            document.getElementById('modal-market').textContent = cancellation.market;
+            document.getElementById('modal-reason').textContent = cancellation.reason;
+            document.getElementById('modal-notes').textContent = cancellation.notes || 'No notes provided';
+            
+            // Set up delete button
+            const deleteBtn = document.getElementById('delete-btn');
+            deleteBtn.onclick = function() {
+                deleteCancellation(cancellation.id, cancellation.timestamp, true);
+            };
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('viewCancellationModal'));
+            modal.show();
+        }
+
+        // Delete cancellation
+        function deleteCancellation(orderId, timestamp, fromModal = false) {
+            if (!confirm(`Are you sure you want to delete cancellation record for order ${orderId}?`)) {
+                return;
+            }
+            
+            let cancellations = JSON.parse(localStorage.getItem('cancellations')) || [];
+            cancellations = cancellations.filter(c => !(c.id === orderId && c.timestamp == timestamp));
+            localStorage.setItem('cancellations', JSON.stringify(cancellations));
+            
+            // Reload data
+            loadFromLocalStorage();
+            
+            // Update dashboard
+            updateDashboard();
+            
+            // Show success message
+            alert(`Cancellation record for order ${orderId} has been deleted.`);
+            
+            // Hide modal if deletion was initiated from modal
+            if (fromModal) {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('viewCancellationModal'));
+                modal.hide();
+            }
+        }
+
+        // Calculate cancellation rate
+        function calculateCancellationRate() {
+            const totalOrders = parseInt(document.getElementById('total-orders').value);
+            const cancellations = JSON.parse(localStorage.getItem('cancellations')) || [];
+            
+            if (isNaN(totalOrders)) {
+                alert('Please enter a valid number for total orders.');
+                return;
+            }
+            
+            if (totalOrders <= 0) {
+                alert('Total orders must be greater than zero.');
+                return;
+            }
+            
+            const rate = (cancellations.length / totalOrders * 100).toFixed(2);
+            document.getElementById('calculated-rate').textContent = `${rate}%`;
+        }
+
+        // Generate report
+        function generateReport() {
+            const reportType = document.getElementById('report-type').value;
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            
+            if (!reportType || !startDate || !endDate) {
+                alert('Please fill all required fields');
+                return;
+            }
+            
+            if (new Date(startDate) > new Date(endDate)) {
+                alert('Start date cannot be after end date');
+                return;
+            }
+            
+            alert(`Report generation for ${reportType} between ${startDate} and ${endDate} would be implemented here.`);
+        }
+
+        // Export data
+        function exportData(format) {
+            const cancellations = JSON.parse(localStorage.getItem('cancellations')) || [];
+            
+            if (cancellations.length === 0) {
+                alert('No cancellation data to export.');
+                return;
+            }
+            
+            switch (format) {
+                case 'csv':
+                    exportToCSV(cancellations);
+                    break;
+                default:
+                    alert('Export to ' + format + ' would be implemented here.');
+            }
+        }
+
+        // Export to CSV
+        function exportToCSV(data) {
+            let csv = 'Order ID,Date,Admin,Market,Reason,Notes\n';
+            
+            data.forEach(item => {
+                csv += `"${item.id}","${item.date}","${item.admin}","${item.market}","${item.reason}","${item.notes || ''}"\n`;
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `cancellations_${new Date().toISOString().slice(0, 10)}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Reset cancellation form
+        function resetForm() {
+            document.getElementById('cancellation-form').reset();
+            document.getElementById('other-reason-container').style.display = 'none';
+            
+            // Set current date
+            const now = new Date();
+            const timezoneOffset = now.getTimezoneOffset() * 60000;
+            const localISOTime = (new Date(now - timezoneOffset)).toISOString().slice(0, 16);
+            document.getElementById('cancellation-date').value = localISOTime;
+        }
+
+        // Reset report form
+        function resetReportForm() {
+            document.getElementById('report-form').reset();
+            document.getElementById('start-date').valueAsDate = new Date();
+            document.getElementById('end-date').valueAsDate = new Date();
+        }
+
+        // Show add cancellation tab
+        function showAddCancellation() {
+            const tab = new bootstrap.Tab(document.querySelector('a[href="#add-cancellation"]'));
+            tab.show();
+        }
+    </script>
+</body>
+</html>
